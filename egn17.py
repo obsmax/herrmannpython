@@ -21,8 +21,8 @@ output
 """
 
 ####################
-def execbash(script):
-    proc = subprocess.Popen("/bin/bash", stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+def execbash(script, tmpdir):
+    proc = subprocess.Popen("/bin/bash", stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd = tmpdir)
     stdout, stderr = proc.communicate(script)
     return stdout, stderr
 ####################
@@ -111,23 +111,36 @@ if __name__ == "__main__":
     freq      = float(sys.argv[4])
     display   = True
     nameout   = 'egn17out.mat'
+    tmpdir    = "/tmp/tmpdir_egn17_%10d" % (np.random.rand() * 1.0e10)
+    cleanup   = True
 
+    #------------------- check access to CPS codes
+    stdout, _ = execbash('which sdisp96', ".")
+    if stdout == "":
+        raise Exception('sdisp96 not found, make sure CPS is installed and added to the path')
+        
     #------------------- check inputs
     assert os.path.exists(mod96file)
     assert wavetype in 'RL'
     assert nmod >= 0
     assert freq > 0.0
-
-    #------------------- write bash script
+    while os.path.isdir(tmpdir):
+        #make sure tmpdir does not exists
+        tmpdir += "_%10d" % (np.random.rand() * 1.0e10)
+    os.mkdir(tmpdir) #create temporary directory
+    
+    #------------------- write bash script   
     script = """
-    rm -f sdisp96.dat DISTFILE.dst sdisp96.??? s[l,r]egn96.??? S[L,R]DER.PLT S[R,L]DER.TXT
+    #rm -f DISTFILE.dst sdisp96.??? s[l,r]egn96.??? S[L,R]DER.PLT S[R,L]DER.TXT
 
     cat << END > DISTFILE.dst 
     10. 0.125 256 -1.0 6.0
     END
 
+    ln -s {mod96file} model.mod96
+    
     ############################### prepare dispersion
-    sprep96 -M {mod96file} -dfile DISTFILE.dst -NMOD {nmodmax} -{wavetype} -FREQ {freq}
+    sprep96 -M model.mod96 -dfile DISTFILE.dst -NMOD {nmodmax} -{wavetype} -FREQ {freq}
 
     ############################### run dispersion
     sdisp96
@@ -139,9 +152,9 @@ if __name__ == "__main__":
     sdpder96 -{wavetype} -TXT  # plot and ascii output
 
     ############################### clean up
-    rm -f sdisp96.dat DISTFILE.dst sdisp96.??? s[l,r]egn96.??? S[L,R]DER.PLT
+    #rm -f sdisp96.dat DISTFILE.dst sdisp96.??? s[l,r]egn96.??? S[L,R]DER.PLT
 
-    """.format(mod96file = mod96file, 
+    """.format(mod96file = os.path.realpath(mod96file), 
                nmodmax = nmod + 1, 
                wavetype = wavetype, 
                minuswavetype = wavetype.lower(),
@@ -150,14 +163,16 @@ if __name__ == "__main__":
     #print (script)
 
     #------------------- execute bash commands
-    stdout, stderr = execbash(script)
-    expected_output = "S%sDER.TXT" % wavetype
+    stdout, stderr = execbash(script, tmpdir = tmpdir)
+    expected_output = "%s/S%sDER.TXT" % (tmpdir, wavetype)
     if not os.path.exists(expected_output):
         raise Exception('output file %s not found, script failed \n%s' % (expected_output, stderr))
 
     #------------------- 
     out = read_TXTout(expected_output)
-    os.system('rm -f S%sDER.TXT' % wavetype) #remove output ascii file
+    if cleanup:
+        #remove temporary directory
+        os.system('rm -rf %s' % tmpdir)
 
     #------------------- 
     if display:
