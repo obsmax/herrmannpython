@@ -111,11 +111,18 @@ if __name__ == "__main__":
     freq      = float(sys.argv[4])
     display   = True
     nameout   = 'egn17out.mat'
+<<<<<<< HEAD
     tmpdir    = "/tmp/tmpdir_egn17_%10d" % (np.random.rand() * 1.0e10)
     cleanup   = True
 
     #------------------- check access to CPS codes
     stdout, _ = execbash('which sdisp96', ".")
+=======
+
+
+    #------------------- check access to CPS codes
+    stdout, _ = execbash('which sdisp96')
+>>>>>>> 0798d971ea1649b27ac707438c18a67c3c99ca9e
     if stdout == "":
         raise Exception('sdisp96 not found, make sure CPS is installed and added to the path')
         
@@ -124,6 +131,7 @@ if __name__ == "__main__":
     assert wavetype in 'RL'
     assert nmod >= 0
     assert freq > 0.0
+<<<<<<< HEAD
     while os.path.isdir(tmpdir):
         #make sure tmpdir does not exists
         tmpdir += "_%10d" % (np.random.rand() * 1.0e10)
@@ -132,6 +140,12 @@ if __name__ == "__main__":
     #------------------- write bash script   
     script = """
     #rm -f DISTFILE.dst sdisp96.??? s[l,r]egn96.??? S[L,R]DER.PLT S[R,L]DER.TXT
+=======
+    
+    #------------------- write bash script
+    script = """
+    rm -f DISTFILE.dst sdisp96.??? s[l,r]egn96.??? S[L,R]DER.PLT S[R,L]DER.TXT
+>>>>>>> 0798d971ea1649b27ac707438c18a67c3c99ca9e
 
     cat << END > DISTFILE.dst 
     10. 0.125 256 -1.0 6.0
