@@ -112,15 +112,21 @@ if __name__ == "__main__":
     display   = True
     nameout   = 'egn17out.mat'
 
+
+    #------------------- check access to CPS codes
+    stdout, _ = execbash('which sdisp96')
+    if stdout == "":
+        raise Exception('sdisp96 not found, make sure CPS is installed and added to the path')
+        
     #------------------- check inputs
     assert os.path.exists(mod96file)
     assert wavetype in 'RL'
     assert nmod >= 0
     assert freq > 0.0
-
+    
     #------------------- write bash script
     script = """
-    rm -f sdisp96.dat DISTFILE.dst sdisp96.??? s[l,r]egn96.??? S[L,R]DER.PLT S[R,L]DER.TXT
+    rm -f DISTFILE.dst sdisp96.??? s[l,r]egn96.??? S[L,R]DER.PLT S[R,L]DER.TXT
 
     cat << END > DISTFILE.dst 
     10. 0.125 256 -1.0 6.0
