@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import subprocess
 import numpy as np
 import sys, os
+from scipy.io import loadmat, savemat
 gcf, gca = plt.gcf, plt.gca
 
 ####################
@@ -15,6 +16,8 @@ input
     wavetype        = R or L for Rayleigh or Love
     nmod            = mode number >= 0
     freq            = frequency (Hz) > 0
+output 
+    writes output in mat format to be read with matlab or scipy.io.loadmat
 """
 
 ####################
@@ -106,8 +109,11 @@ if __name__ == "__main__":
     wavetype  = sys.argv[2]
     nmod      = int(sys.argv[3])
     freq      = float(sys.argv[4])
+    display   = True
+    nameout   = 'egn17out.mat'
 
     #------------------- check inputs
+    assert os.path.exists(mod96file)
     assert wavetype in 'RL'
     assert nmod >= 0
     assert freq > 0.0
@@ -151,41 +157,52 @@ if __name__ == "__main__":
 
     #------------------- 
     out = read_TXTout(expected_output)
+    os.system('rm -f S%sDER.TXT' % wavetype) #remove output ascii file
 
     #------------------- 
-    ax1 = gcf().add_subplot(121)
-    ax2 = gcf().add_subplot(122, sharey = ax1)
-    ax1.invert_yaxis()
-    #------------------
-    z  = np.concatenate((np.repeat(out['model']["Z"], 2)[1:], [sum(out['model']["H"]) * 1.1]))
-    vp = np.repeat(out['model']["Vp"], 2)
-    vs = np.repeat(out['model']["Vs"], 2)
-    rh = np.repeat(out['model']["Rh"], 2)
-    ax1.plot(vp, z, label = "Vp")
-    ax1.plot(vs, z, label = "Vs")
-    ax1.plot(rh, z, label = "Rh")
-    ax1.legend()
-    ax1.grid(True)
-    #------------------
-    key = '%s%d' % (wavetype, nmod)
-    if wavetype == "R":
-        ax2.plot(out[key]['UR'],  out['model']['Z'], label = "UR") #radial displacement
-        ax2.plot(out[key]['UZ'],  out['model']['Z'], label = "UZ")
-        ax2.plot(out[key]['TR'],  out['model']['Z'], label = "TR") #radial stress
-        ax2.plot(out[key]['TZ'],  out['model']['Z'], label = "TZ")
-    if wavetype == "L":
-        ax2.plot(out[key]['UT'],  out['model']['Z'], label = "UT")
-        ax2.plot(out[key]['TT'],  out['model']['Z'], label = "TT")        
+    if display:
+        key = '%s%d' % (wavetype, nmod)
+        if key not in out.keys():
+            raise Exception('key %s not found in output file, is the frequency (%fHz) below the cut-off frequency for mode %d?' % (key, freq, nmod))
 
-    ax2.set_title("%s : T = %fs" % (key, out[key]["T"]))
-    ax2.legend()
-    ax1.set_ylabel('depth (km)')
-    ax2.set_xlabel('eigenfunctions')
-    ax2.grid(True)
-    gcf().show()
+        ax1 = gcf().add_subplot(121)
+        ax2 = gcf().add_subplot(122, sharey = ax1)
+        ax1.invert_yaxis()
+        #------------------
+        z  = np.concatenate((np.repeat(out['model']["Z"], 2)[1:], [sum(out['model']["H"]) * 1.1]))
+        vp = np.repeat(out['model']["Vp"], 2)
+        vs = np.repeat(out['model']["Vs"], 2)
+        rh = np.repeat(out['model']["Rh"], 2)
+        ax1.plot(vp, z, label = "Vp")
+        ax1.plot(vs, z, label = "Vs")
+        ax1.plot(rh, z, label = "Rh")
+        ax1.legend()
+        ax1.grid(True)
+        #------------------
 
-    raw_input('pause')
-    os.system('rm -f S%sDER.TXT' % wavetype)
+        if wavetype == "R":
+            ax2.plot(out[key]['UR'],  out['model']['Z'], label = "UR") #radial displacement
+            ax2.plot(out[key]['UZ'],  out['model']['Z'], label = "UZ")
+            ax2.plot(out[key]['TR'],  out['model']['Z'], label = "TR") #radial stress
+            ax2.plot(out[key]['TZ'],  out['model']['Z'], label = "TZ")
+        if wavetype == "L":
+            ax2.plot(out[key]['UT'],  out['model']['Z'], label = "UT")
+            ax2.plot(out[key]['TT'],  out['model']['Z'], label = "TT")        
+
+        ax2.set_title("%s : T = %fs" % (key, out[key]["T"]))
+        ax2.legend()
+        ax1.set_ylabel('depth (km)')
+        ax2.set_xlabel('eigenfunctions')
+        ax2.grid(True)
+        gcf().show()
+
+        raw_input('pause')
+    #------------------- 
+    #write mat file
+    print ("writing %s" % nameout)
+    savemat(nameout, out)
+
+
 
 
 
