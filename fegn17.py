@@ -157,7 +157,7 @@ def checkCPS():
 
 ####################
 def fegn17(mod96file, wavetype, nmod, freq, tmpdir = None, fig = None, cleanup = True):
-    """ function to compute eignenfunctions and phase velocity sensitivity kernels
+    """ function to compute eigenfunctions and phase velocity sensitivity kernels
     input 
         mod96file       = ascii file at mod96 format (see Herrmann's documentation)
         wavetype        = R or L for Rayleigh or Love
@@ -287,7 +287,7 @@ def dfegn17(mod96file, wavetype, nmod, freq, pertu = 0.05, tmpdir = None, cleanu
     os.mkdir(tmpdir)
 
     #read starting model
-    Z, H, VP, VS, RHO, QP, QS, ETAP, ETAS, FREFP, FREFS = readmod96('example.mod96')
+    Z, H, VP, VS, RHO, QP, QS, ETAP, ETAS, FREFP, FREFS = readmod96(mod96file)
     model0 = np.concatenate((H, VP, VS, RHO))
     nlayer = len(H)
     IH  = np.arange(nlayer) #index of thickness parameters
@@ -297,7 +297,7 @@ def dfegn17(mod96file, wavetype, nmod, freq, pertu = 0.05, tmpdir = None, cleanu
 
 
 
-    #compute eignefunctions for starting model
+    #compute eigenfunctions for starting model
     out0 = fegn17(mod96file, wavetype, nmod, freq, tmpdir = "%s/%s" % (tmpdir, "startingmodel"), fig = None, cleanup = False)
 
     #initiate kernels
@@ -415,7 +415,7 @@ def dfegn17(mod96file, wavetype, nmod, freq, pertu = 0.05, tmpdir = None, cleanu
             Y = np.ma.masked_where(np.isnan(Y), Y)
             ax2.pcolormesh(dout["Z"], dout["Z"], Y, vmin = -vmax, vmax = vmax)
             ax2.set_title("DUZ/DVS, T = %f, mode %d" % (1. / freq, nmod))
-            ax3.set_xlabel('eignefunction depth (km)')
+            ax3.set_xlabel('eigenfunction depth (km)')
         elif wavetype == "L":
             vmax = abs(dout['DUTDVS'][nmod, :, :]).max()
             ax3.plot(dout["Z"], out0["%s%d" % (wavetype, nmod)]['UT'], label = "UT")
@@ -423,7 +423,7 @@ def dfegn17(mod96file, wavetype, nmod, freq, pertu = 0.05, tmpdir = None, cleanu
             Y = np.ma.masked_where(np.isnan(Y), Y)
             ax2.pcolormesh(dout["Z"], dout["Z"], Y, vmin = -vmax, vmax = vmax)
             ax2.set_title("DUT/DVS, T = %f, mode %d" % (1. / freq, nmod))
-            ax3.set_xlabel('eignefunction depth (km)')
+            ax3.set_xlabel('eigenfunction depth (km)')
 
         ax3.xaxis.set_label_position("top")    
         ax3.legend()
