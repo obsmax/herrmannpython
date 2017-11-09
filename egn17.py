@@ -172,7 +172,7 @@ if __name__ == "__main__":
     out = read_TXTout(expected_output)
     if cleanup:
         #remove temporary directory
-        os.system('rm -rf %s' % tmpdir)
+        execbash('rm -rf %s' % tmpdir, ".")
 
     #------------------- 
     if display:
